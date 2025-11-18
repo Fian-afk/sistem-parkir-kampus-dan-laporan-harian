@@ -36,3 +36,35 @@ void hitungBiaya(int index) {
     data.BiayaParkir = Biaya;
     TotalPendapatan += Biaya;
 }
+
+void inputData() {
+    cout << "-- Input Data Parkir Kendaraan --" << endl;
+    int N;
+    cout << "Masukkan jumlah kendaraan yang parkir hari ini (Max " << MAX_KENDARAAN << "): ";
+
+    if (!(cin >> N)) {
+        cout << "Input tidak valid." << endl;
+        N = 0;
+        cin.clear();
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+    }
+
+    if (N > MAX_KENDARAAN) {
+        N = MAX_KENDARAAN;
+    }
+
+    for (int i = 0; i < N; ++i) {
+        DataParkirRecord data;
+        cout << "Kendaraan ke-" << (i + 1) << endl;
+        cout << "Masukkan Plat Nomor: ";
+        cin >> data.PlatNomor;
+        cout << "Masukkan Jam Masuk (format 24 jam, misal 13.30): ";
+        cin >> data.JamMasuk;
+        cout << "Masukkan Jam Keluar (format 24 jam, misal 15.45): ";
+        cin >> data.JamKeluar;
+
+        transform(data.PlatNomor.begin(), data.PlatNomor.end(), data.PlatNomor.begin(), ::toupper);
+        hitungBiaya(DataParkir.size()-1);
+        DataParkir.push_back(data);
+    }
+}
