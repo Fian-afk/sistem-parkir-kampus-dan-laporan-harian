@@ -68,3 +68,15 @@ void inputData() {
         DataParkir.push_back(data);
     }
 }
+
+void bubbleSort() {
+    int n = DataParkir.size();
+    for (int i = 0; i < n - 1; ++i) {
+        for (int j = 0; j < n - i - 1; ++j) {
+            if (DataParkir[j].BiayaParkir < DataParkir[j + 1].BiayaParkir) {
+                swap(DataParkir[j], DataParkir[j + 1]);
+            }
+        }
+    }
+    cout << "Data telah diurutkan berdasarkan Biaya Parkir (tertinggi ke terendah)." << endl;
+}
