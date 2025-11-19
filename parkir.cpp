@@ -3,75 +3,127 @@
 vector<DataParkirRecord> DataParkir;
 long long TotalPendapatan = 0;
 
-double konversi_waktu(double waktu_str) {
-    if(waktu_str < 0 || waktu_str >= 24.00) return 0.0;
-    int jam = static_cast<int>(waktu_str);
-    double menit_desimal = (waktu_str - jam) * 100.0 / 60.0;
-    return jam + menit_desimal;
+// Konversi format HH.MM (misal 13.30) -> jam desimal (13 + 30/60 = 13.5).
+// Jika input invalid (menit >= 60 atau jam di luar 0-23), kembalikan -1.0
+double konversi_waktu(double waktu_input) {
+    if (!(waktu_input >= 0.0)) return -1.0;
+    int jam = static_cast<int>(waktu_input);
+    int menit = static_cast<int>(round((waktu_input - jam) * 100));
+
+    if (jam < 0 || jam > 23) return -1.0;
+    if (menit < 0 || menit >= 60) return -1.0;
+
+    return jam + (menit / 60.0);
 }
 
 void hitungBiaya(int index) {
+    if (index < 0 || index >= static_cast<int>(DataParkir.size())) return;
+
     DataParkirRecord &data = DataParkir[index];
 
-    double jam_masuk_desimal = konversi_waktu(data.JamMasuk);
-    double jam_keluar_desimal = konversi_waktu(data.JamKeluar);
-    double Durasi = jam_keluar_desimal - jam_masuk_desimal;
+    double masuk = konversi_waktu(data.JamMasuk);
+    double keluar = konversi_waktu(data.JamKeluar);
 
-    if (Durasi < 0) {
-        Durasi += 24.0;
+    if (masuk < 0.0 || keluar < 0.0) {
+        // Tanda bahwa input waktu invalid — atur nilai default
+        data.LamaParkir = 0.0;
+        data.BiayaParkir = 0;
+        return;
     }
 
-    int LamaDibulatkan = static_cast<int>(ceil(Durasi));
-    data.LamaParkir = Durasi;
+    double durasi = keluar - masuk;
+    if (durasi < 0.0) durasi += 24.0; // lewat tengah malam
 
-    int Biaya = 0;
-    if (LamaDibulatkan <= 1) {
-        Biaya = TARIF_JAM_PERTAMA;
-    } else {
-        Biaya = TARIF_JAM_PERTAMA + (LamaDibulatkan - 1) * TARIF_JAM_BERIKUTNYA;
+    data.LamaParkir = durasi;
+    int jam_bulat = static_cast<int>(ceil(durasi));
+
+    int biaya = TARIF_JAM_PERTAMA;
+    if (jam_bulat > 1) biaya += (jam_bulat - 1) * TARIF_JAM_BERIKUTNYA;
+    if (biaya > TARIF_MAKSIMUM) biaya = TARIF_MAKSIMUM;
+
+    data.BiayaParkir = biaya;
+}
+
+// Hitung ulang total pendapatan dari seluruh DataParkir
+void recalcTotalPendapatan() {
+    long long total = 0;
+    for (const auto &d : DataParkir) total += d.BiayaParkir;
+    TotalPendapatan = total;
+}
+
+bool platSudahAda(const string &plat) {
+    for (const auto &d : DataParkir) {
+        if (d.PlatNomor == plat) return true;
     }
-    if (Biaya > TARIF_MAKSIMUM) {
-            Biaya = TARIF_MAKSIMUM;
-    }
-    data.BiayaParkir = Biaya;
-    TotalPendapatan += Biaya;
+    return false;
 }
 
 void inputData() {
-    cout << "-- Input Data Parkir Kendaraan --" << endl;
+    cout << "\n-- Input Data Parkir Kendaraan --" << endl;
     int N;
-    cout << "Masukkan jumlah kendaraan yang parkir hari ini (Max " << MAX_KENDARAAN << "): ";
-
+    cout << "Masukkan jumlah kendaraan yang ingin ditambahkan (Max " << MAX_KENDARAAN << "): ";
     if (!(cin >> N)) {
-        cout << "Input tidak valid." << endl;
-        N = 0;
+        cout << "Input tidak valid. Kembali ke menu." << endl;
         cin.clear();
         cin.ignore(numeric_limits<streamsize>::max(), '\n');
+        return;
     }
 
-    if (N > MAX_KENDARAAN) {
-        N = MAX_KENDARAAN;
+    if (N <= 0) {
+        cout << "Tidak ada data yang ditambahkan." << endl;
+        return;
+    }
+
+    // batasi jumlah total agar tidak melebihi MAX_KENDARAAN
+    if (static_cast<int>(DataParkir.size()) + N > MAX_KENDARAAN) {
+        int allowed = MAX_KENDARAAN - static_cast<int>(DataParkir.size());
+        cout << "Hanya tersisa slot untuk " << allowed << " kendaraan. Akan ditambahkan sebanyak itu." << endl;
+        if (allowed <= 0) {
+            cout << "Kapasitas penuh. Hapus data dulu jika ingin menambah." << endl;
+            return;
+        }
+        N = allowed;
     }
 
     for (int i = 0; i < N; ++i) {
         DataParkirRecord data;
-        cout << "Kendaraan ke-" << (i + 1) << endl;
-        cout << "Masukkan Plat Nomor: ";
-        cin >> data.PlatNomor;
-        cout << "Masukkan Jam Masuk (format 24 jam, misal 13.30): ";
+        cout << "\nKendaraan ke-" << (DataParkir.size() + 1) << endl;
+        // Validasi plat nomor unik
+        while (true) {
+            cout << "Masukkan Plat Nomor: ";
+            cin >> data.PlatNomor;
+            transform(data.PlatNomor.begin(), data.PlatNomor.end(), data.PlatNomor.begin(), ::toupper);
+
+            if (!platSudahAda(data.PlatNomor)) {
+                break;
+            } else {
+                cout << "Plat nomor sudah terdaftar. Masukkan plat nomor lain.\n";
+            }
+        }
+
+        cout << "Masukkan Jam Masuk (format HH.MM, contoh 7.30 atau 13.05): ";
         cin >> data.JamMasuk;
-        cout << "Masukkan Jam Keluar (format 24 jam, misal 15.45): ";
+        cout << "Masukkan Jam Keluar (format HH.MM, contoh 10.50 atau 15.45): ";
         cin >> data.JamKeluar;
 
-        transform(data.PlatNomor.begin(), data.PlatNomor.end(), data.PlatNomor.begin(), ::toupper);
+        // push lalu hitung biaya untuk index valid
         DataParkir.push_back(data);
-        hitungBiaya(DataParkir.size() - 1);
-
+        int idx = static_cast<int>(DataParkir.size()) - 1;
+        hitungBiaya(idx);
     }
+
+    // setelah semua input, hitung ulang total pendapatan
+    recalcTotalPendapatan();
+    cout << "\nInput selesai. " << N << " record ditambahkan." << endl;
 }
 
 void bubbleSort() {
-    int n = DataParkir.size();
+    int n = static_cast<int>(DataParkir.size());
+    if (n <= 1) {
+        cout << "Data kurang dari 2, tidak perlu diurutkan." << endl;
+        return;
+    }
+
     for (int i = 0; i < n - 1; ++i) {
         for (int j = 0; j < n - i - 1; ++j) {
             if (DataParkir[j].BiayaParkir < DataParkir[j + 1].BiayaParkir) {
@@ -83,19 +135,28 @@ void bubbleSort() {
 }
 
 void cariKendaraan() {
-    cout << "-- Cari Kendaraan Berdasarkan Plat Nomor --" << endl;
+    if (DataParkir.empty()) {
+        cout << "Belum ada data. Silakan input data terlebih dahulu." << endl;
+        return;
+    }
+
+    cout << "\n-- Cari Kendaraan Berdasarkan Plat Nomor --" << endl;
     string cariPlat;
     cout << "Masukkan Plat Nomor yang dicari: ";
     cin >> cariPlat;
     transform(cariPlat.begin(), cariPlat.end(), cariPlat.begin(), ::toupper);
+
     bool ditemukan = false;
     for (const auto &data : DataParkir) {
         if (data.PlatNomor == cariPlat) {
-            cout << "Kendaraan Ditemukan:" << endl;
-            cout << "Plat Nomor: " << data.PlatNomor << endl;
-            cout << "Jam Masuk: " << data.JamMasuk << endl;
-            cout << "Jam Keluar: " << data.JamKeluar << endl;
-            cout << "Lama Parkir: " << data.LamaParkir << " jam" << endl;
+            int dJam = static_cast<int>(data.LamaParkir);
+            int dMen = static_cast<int>(round((data.LamaParkir - dJam) * 60));
+
+            cout << "\nKendaraan Ditemukan:" << endl;
+            cout << "Plat Nomor  : " << data.PlatNomor << endl;
+            cout << "Jam Masuk   : " << fixed << setprecision(2) << data.JamMasuk << endl;
+            cout << "Jam Keluar  : " << fixed << setprecision(2) << data.JamKeluar << endl;
+            cout << "Lama Parkir : " << dJam << " jam " << dMen << " menit" << endl;
             cout << "Biaya Parkir: Rp " << data.BiayaParkir << endl;
             ditemukan = true;
             break;
@@ -107,31 +168,35 @@ void cariKendaraan() {
 }
 
 void tampilkanLaporan() {
-    cout << "\n" << string(60, '=') << endl;
+    cout << "\n" << string(80, '=') << endl;
     cout << "LAPORAN PARKIR KENDARAAN" << endl;
-    cout << string(60, '=') << endl;
+    cout << string(80, '=') << endl;
 
-    cout << left << setw(4) << "No. " << " | "
-            << left << setw(10) << "Plat Nomor" << " | "
-            << left << setw(6) << "Jam Masuk" << " | "
-            << left << setw(6) << "Jam Keluar" << " | "
-            << left << setw(10) << "Lama Parkir (Jam)" << " | "
-            << left << setw(10) << "Biaya Parkir (Rp)" << endl;
+    cout << left << setw(4) << "No" << " | "
+         << setw(12) << "Plat Nomor" << " | "
+         << setw(10) << "Jam Masuk" << " | "
+         << setw(10) << "Jam Keluar" << " | "
+         << setw(12) << "Durasi" << " | "
+         << setw(12) << "Biaya (Rp)" << endl;
 
-    cout << string(60, '-') << endl;
+    cout << string(80, '-') << endl;
 
     for (size_t i = 0; i < DataParkir.size(); ++i) {
-        const DataParkirRecord &data = DataParkir[i];
+        const auto &d = DataParkir[i];
+        int dJam = static_cast<int>(d.LamaParkir);
+        int dMen = static_cast<int>(round((d.LamaParkir - dJam) * 60));
+
         cout << left << setw(4) << (i + 1) << " | "
-                << left << setw(10) << data.PlatNomor << " | "
-                << left << setw(6) << fixed << setprecision(2) << data.JamMasuk << " | "
-                << left << setw(6) << fixed << setprecision(2) << data.JamKeluar << " | "
-                << left << setw(10) << fixed << setprecision(2) << data.LamaParkir << " | "
-                << left << setw(10) << data.BiayaParkir << endl;
+             << setw(12) << d.PlatNomor << " | "
+             << setw(10) << fixed << setprecision(2) << d.JamMasuk << " | "
+             << setw(10) << fixed << setprecision(2) << d.JamKeluar << " | "
+             << setw(12) << (to_string(dJam) + " jam " + to_string(dMen) + " menit") << " | "
+             << setw(12) << d.BiayaParkir << endl;
     }
 
-    cout << string(60, '=') << endl;
+    cout << string(80, '=') << endl;
+    recalcTotalPendapatan(); // pastikan konsisten
     cout << "Total Kendaraan Parkir Hari Ini: " << DataParkir.size() << endl;
     cout << "Total Pendapatan Parkir Hari Ini: Rp " << TotalPendapatan << endl;
-    cout << string(60, '=') << endl;
+    cout << string(80, '=') << endl;
 }

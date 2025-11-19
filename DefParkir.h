@@ -7,6 +7,7 @@
 #include <cmath>
 #include <iomanip>
 #include <algorithm>
+#include <limits>
 
 using namespace std;
 
@@ -26,11 +27,14 @@ struct DataParkirRecord {
 extern vector<DataParkirRecord> DataParkir;
 extern long long TotalPendapatan;
 
-double konversi_waktu(double waktu_str);
+bool platSudahAda(const string &plat);
+
+double konversi_waktu(double waktu_input); 
 void hitungBiaya(int index);
+void recalcTotalPendapatan();
 void inputData();
 void bubbleSort();
 void cariKendaraan();
 void tampilkanLaporan();
 
-#endif // DEFPARKIR_H
+#endif
