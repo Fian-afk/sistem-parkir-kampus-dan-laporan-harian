@@ -104,3 +104,33 @@ void cariKendaraan() {
         cout << "Kendaraan dengan Plat Nomor " << cariPlat << " tidak ditemukan." << endl;
     }
 }
+
+void tampilkanLaporan() {
+    cout << "\n" << string(60, '=') << endl;
+    cout << "LAPORAN PARKIR KENDARAAN" << endl;
+    cout << string(60, '=') << endl;
+
+    cout << left << setw(4) << "No. " << " | "
+            << left << setw(10) << "Plat Nomor" << " | "
+            << left << setw(6) << "Jam Masuk" << " | "
+            << left << setw(6) << "Jam Keluar" << " | "
+            << left << setw(10) << "Lama Parkir (Jam)" << " | "
+            << left << setw(10) << "Biaya Parkir (Rp)" << endl;
+
+    cout << string(60, '-') << endl;
+
+    for (size_t i = 0; i < DataParkir.size(); ++i) {
+        const DataParkirRecord &data = DataParkir[i];
+        cout << left << setw(4) << (i + 1) << " | "
+                << left << setw(10) << data.PlatNomor << " | "
+                << left << setw(6) << fixed << setprecision(2) << data.JamMasuk << " | "
+                << left << setw(6) << fixed << setprecision(2) << data.JamKeluar << " | "
+                << left << setw(10) << fixed << setprecision(2) << data.LamaParkir << " | "
+                << left << setw(10) << data.BiayaParkir << endl;
+    }
+
+    cout << string(60, '=') << endl;
+    cout << "Total Kendaraan Parkir Hari Ini: " << DataParkir.size() << endl;
+    cout << "Total Pendapatan Parkir Hari Ini: Rp " << TotalPendapatan << endl;
+    cout << string(60, '=') << endl;
+}
