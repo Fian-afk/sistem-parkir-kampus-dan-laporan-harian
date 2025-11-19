@@ -80,3 +80,27 @@ void bubbleSort() {
     }
     cout << "Data telah diurutkan berdasarkan Biaya Parkir (tertinggi ke terendah)." << endl;
 }
+
+void cariKendaraan() {
+    cout << "-- Cari Kendaraan Berdasarkan Plat Nomor --" << endl;
+    string cariPlat;
+    cout << "Masukkan Plat Nomor yang dicari: ";
+    cin >> cariPlat;
+    transform(cariPlat.begin(), cariPlat.end(), cariPlat.begin(), ::toupper);
+    bool ditemukan = false;
+    for (const auto &data : DataParkir) {
+        if (data.PlatNomor == cariPlat) {
+            cout << "Kendaraan Ditemukan:" << endl;
+            cout << "Plat Nomor: " << data.PlatNomor << endl;
+            cout << "Jam Masuk: " << data.JamMasuk << endl;
+            cout << "Jam Keluar: " << data.JamKeluar << endl;
+            cout << "Lama Parkir: " << data.LamaParkir << " jam" << endl;
+            cout << "Biaya Parkir: Rp " << data.BiayaParkir << endl;
+            ditemukan = true;
+            break;
+        }
+    }
+    if (!ditemukan) {
+        cout << "Kendaraan dengan Plat Nomor " << cariPlat << " tidak ditemukan." << endl;
+    }
+}
