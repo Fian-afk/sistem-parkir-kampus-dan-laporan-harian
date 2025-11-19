@@ -64,8 +64,9 @@ void inputData() {
         cin >> data.JamKeluar;
 
         transform(data.PlatNomor.begin(), data.PlatNomor.end(), data.PlatNomor.begin(), ::toupper);
-        hitungBiaya(DataParkir.size()-1);
         DataParkir.push_back(data);
+        hitungBiaya(DataParkir.size() - 1);
+
     }
 }
 

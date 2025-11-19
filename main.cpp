@@ -6,5 +6,10 @@ int main() {
     bubbleSort();
     tampilkanLaporan();
     cariKendaraan();
+    
+    cout << "Tekan ENTER untuk keluar...";
+    cin.ignore();
+    cin.get();
+
     return 0;
 }
