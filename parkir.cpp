@@ -16,6 +16,54 @@ double konversi_waktu(double waktu_input) {
     return jam + (menit / 60.0);
 }
 
+// Overload untuk menerima input string seperti "07.30", "7.30", "13:05" atau "7"
+double konversi_waktu(const string &waktu_str) {
+    // salin dan trim
+    string s = waktu_str;
+    while (!s.empty() && isspace(static_cast<unsigned char>(s.front()))) s.erase(s.begin());
+    while (!s.empty() && isspace(static_cast<unsigned char>(s.back()))) s.pop_back();
+    if (s.empty()) return -1.0;
+
+    size_t pos = s.find_first_of(".:");
+    int jam = 0;
+    int menit = 0;
+
+    try {
+        if (pos == string::npos) {
+            // tidak ada pemisah, anggap hanya jam
+            jam = stoi(s);
+            menit = 0;
+        } else {
+            string jamStr = s.substr(0, pos);
+            string menitStr = s.substr(pos + 1);
+
+            if (jamStr.empty()) return -1.0;
+            jam = stoi(jamStr);
+
+            if (menitStr.empty()) {
+                menit = 0;
+            } else {
+                // ambil hanya digit dari bagian menit
+                string digits;
+                for (char c : menitStr) {
+                    if (isdigit(static_cast<unsigned char>(c))) digits.push_back(c);
+                }
+                if (digits.empty()) return -1.0;
+                menit = stoi(digits);
+                // jika pengguna memasukkan "7.3" kemungkinan maksudnya 7:30, bukan 7:03
+                if (digits.length() == 1) menit *= 10;
+            }
+        }
+    } catch (...) {
+        return -1.0;
+    }
+
+    if (jam < 0 || jam > 23) return -1.0;
+    if (menit < 0 || menit >= 60) return -1.0;
+
+    return jam + (menit / 60.0);
+}
+
 void hitungBiaya(int index) {
     if (index < 0 || index >= static_cast<int>(DataParkir.size())) return;
 
@@ -101,10 +149,29 @@ void inputData() {
             }
         }
 
-        cout << "Masukkan Jam Masuk (format HH.MM, contoh 7.30 atau 13.05): ";
-        cin >> data.JamMasuk;
-        cout << "Masukkan Jam Keluar (format HH.MM, contoh 10.50 atau 15.45): ";
-        cin >> data.JamKeluar;
+        // Baca sebagai string lalu validasi & konversi
+        string sMasuk, sKeluar;
+        double convertedMasuk = -1.0, convertedKeluar = -1.0;
+
+        while (true) {
+            cout << "Masukkan Jam Masuk (format HH.MM atau HH:MM, contoh 7.30 atau 13:05): ";
+            cin >> sMasuk;
+            convertedMasuk = konversi_waktu(sMasuk); // akan kita tambahkan overload
+            if (convertedMasuk >= 0.0) break;
+            cout << "Format waktu tidak valid. Coba lagi.\n";
+        }
+
+        while (true) {
+            cout << "Masukkan Jam Keluar (format HH.MM atau HH:MM, contoh 10.50 atau 15:45): ";
+            cin >> sKeluar;
+            convertedKeluar = konversi_waktu(sKeluar);
+            if (convertedKeluar >= 0.0) break;
+            cout << "Format waktu tidak valid. Coba lagi.\n";
+        }
+
+        data.JamMasuk = convertedMasuk;
+        data.JamKeluar = convertedKeluar;
+
 
         // push lalu hitung biaya untuk index valid
         DataParkir.push_back(data);
@@ -151,6 +218,7 @@ void cariKendaraan() {
         if (data.PlatNomor == cariPlat) {
             int dJam = static_cast<int>(data.LamaParkir);
             int dMen = static_cast<int>(round((data.LamaParkir - dJam) * 60));
+            if (dMen == 60) { dJam += 1; dMen = 0; }
 
             cout << "\nKendaraan Ditemukan:" << endl;
             cout << "Plat Nomor  : " << data.PlatNomor << endl;
@@ -185,6 +253,7 @@ void tampilkanLaporan() {
         const auto &d = DataParkir[i];
         int dJam = static_cast<int>(d.LamaParkir);
         int dMen = static_cast<int>(round((d.LamaParkir - dJam) * 60));
+        if (dMen == 60) { dJam += 1; dMen = 0; }
 
         cout << left << setw(4) << (i + 1) << " | "
              << setw(12) << d.PlatNomor << " | "
