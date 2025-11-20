@@ -106,6 +106,21 @@ bool platSudahAda(const string &plat) {
     return false;
 }
 
+bool validasiPlat(const string& plat) {
+    bool adaHuruf = false;
+    bool adaAngka = false;
+
+    if (plat.empty()) return false;
+
+    for (char c : plat) {
+        if (!isalnum(c)) return false; 
+        if (isalpha(c)) adaHuruf = true;
+        if (isdigit(c)) adaAngka = true;
+    }
+
+    return adaHuruf && adaAngka;
+}
+
 void inputData() {
     cout << "\n-- Input Data Parkir Kendaraan --" << endl;
     int N;
@@ -141,6 +156,11 @@ void inputData() {
             cout << "Masukkan Plat Nomor: ";
             cin >> data.PlatNomor;
             transform(data.PlatNomor.begin(), data.PlatNomor.end(), data.PlatNomor.begin(), ::toupper);
+
+            if (!validasiPlat(data.PlatNomor)) {
+                cout << "Format plat nomor tidak valid. Harus mengandung huruf dan angka, tanpa simbol.\n";
+                continue;
+            }
 
             if (!platSudahAda(data.PlatNomor)) {
                 break;

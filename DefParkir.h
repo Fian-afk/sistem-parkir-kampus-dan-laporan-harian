@@ -28,6 +28,7 @@ extern vector<DataParkirRecord> DataParkir;
 extern long long TotalPendapatan;
 
 bool platSudahAda(const string &plat);
+bool validasiPlat(const string &plat);
 
 double konversi_waktu(double waktu_input); 
 void hitungBiaya(int index);
