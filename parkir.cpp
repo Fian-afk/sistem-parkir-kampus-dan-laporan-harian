@@ -1,4 +1,5 @@
 #include "DefParkir.h"
+#include <sstream>
 
 vector<DataParkirRecord> DataParkir;
 long long TotalPendapatan = 0;
@@ -14,6 +15,17 @@ double konversi_waktu(double waktu_input) {
     if (menit < 0 || menit >= 60) return -1.0;
 
     return jam + (menit / 60.0);
+}
+
+// Format desimal jam (misal 7.5) menjadi string "HH:MM" (misal "07:30").
+string format_waktu(double decimalHour) {
+    if (decimalHour < 0.0) return string("--:--");
+    int jam = static_cast<int>(floor(decimalHour));
+    int menit = static_cast<int>(round((decimalHour - jam) * 60));
+    if (menit == 60) { jam = (jam + 1) % 24; menit = 0; }
+    ostringstream oss;
+    oss << setw(2) << setfill('0') << jam << ":" << setw(2) << setfill('0') << menit;
+    return oss.str();
 }
 
 // Overload untuk menerima input string seperti "07.30", "7.30", "13:05" atau "7"
@@ -69,8 +81,11 @@ void hitungBiaya(int index) {
 
     DataParkirRecord &data = DataParkir[index];
 
-    double masuk = konversi_waktu(data.JamMasuk);
-    double keluar = konversi_waktu(data.JamKeluar);
+    // Field `JamMasuk` dan `JamKeluar` sudah disimpan dalam bentuk jam desimal
+    // (misal 7.5 = 7 jam 30 menit) oleh `konversi_waktu(string)`, jadi tidak
+    // perlu memanggil konversi lagi. Gunakan langsung nilai yang tersimpan.
+    double masuk = data.JamMasuk;
+    double keluar = data.JamKeluar;
 
     if (masuk < 0.0 || keluar < 0.0) {
         // Tanda bahwa input waktu invalid — atur nilai default
@@ -242,8 +257,8 @@ void cariKendaraan() {
 
             cout << "\nKendaraan Ditemukan:" << endl;
             cout << "Plat Nomor  : " << data.PlatNomor << endl;
-            cout << "Jam Masuk   : " << fixed << setprecision(2) << data.JamMasuk << endl;
-            cout << "Jam Keluar  : " << fixed << setprecision(2) << data.JamKeluar << endl;
+            cout << "Jam Masuk   : " << format_waktu(data.JamMasuk) << endl;
+            cout << "Jam Keluar  : " << format_waktu(data.JamKeluar) << endl;
             cout << "Lama Parkir : " << dJam << " jam " << dMen << " menit" << endl;
             cout << "Biaya Parkir: Rp " << data.BiayaParkir << endl;
             ditemukan = true;
@@ -277,8 +292,8 @@ void tampilkanLaporan() {
 
         cout << left << setw(4) << (i + 1) << " | "
              << setw(12) << d.PlatNomor << " | "
-             << setw(10) << fixed << setprecision(2) << d.JamMasuk << " | "
-             << setw(10) << fixed << setprecision(2) << d.JamKeluar << " | "
+             << setw(10) << format_waktu(d.JamMasuk) << " | "
+             << setw(10) << format_waktu(d.JamKeluar) << " | "
              << setw(12) << (to_string(dJam) + " jam " + to_string(dMen) + " menit") << " | "
              << setw(12) << d.BiayaParkir << endl;
     }
